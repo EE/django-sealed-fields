@@ -1,6 +1,7 @@
 [project]
 name = "django-sealed-fields"
 version = "0.1.0"
+authors = [{ name = "Jan Rydzewski" }]
 description = "Encrypted Django model fields whose values leave the application only where code says reveal(), with key rotation and moving plain columns in, each with a check."
 readme = "README.md"
 license = "MIT"
