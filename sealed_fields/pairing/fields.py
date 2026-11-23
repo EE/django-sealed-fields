@@ -9,6 +9,12 @@ Setting either attribute sets both, building an instance gives both the same val
 every save writes both columns, and loading a row applies ``pair_state``.
 ``QuerySet.update()``, ``bulk_update()`` naming one field of a pair, and raw SQL go around all of it.
 The model must use ``PairedFieldsMixin``, which a system check enforces (``sealed_fields_pairing.E001``).
+
+The pair is kept in step both ways so that code writing the plain field needs no change while the pair exists.
+Keeping it one way, copying the sealed value to the plain field on save,
+would drop the attribute descriptors and the ``class_prepared`` hook,
+but would make every writer move to the sealed field in the deploy that adds it,
+and the next save of the row would quietly undo a write that went to the plain field instead.
 """
 from functools import cache
 
