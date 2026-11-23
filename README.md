@@ -174,11 +174,13 @@ from django_sealed_fields.pairing.fields import PairedFieldsMixin, PairedSealedT
 
 class Invitation(PairedFieldsMixin, models.Model):
     code = models.CharField(max_length=20, unique=True)
-    code_sealed = PairedSealedTextField(purpose='invitation-code', searchable=True, plain='code', null=True)
+    code_sealed = PairedSealedTextField(purpose='invitation-code', searchable=True, plain='code')
 ```
 
 A pair holds one value:
 setting either attribute sets both, and every save writes both columns.
+Forms and validation see only the plain field,
+since a form showing both would keep whichever it set last.
 A row whose sealed column is still null loads its value from the plain one,
 since it was written before the sealed field existed;
 any other row whose columns disagree does not load (`PairMismatchError`).
@@ -186,10 +188,11 @@ Something wrote such a row around the pair —
 `QuerySet.update()`, `bulk_update()` naming one field of a pair, or raw SQL —
 so `seal --check` lists it and `seal` leaves it for whoever knows which column is right.
 
-1. **Expand.** Add the paired field, nullable, and deploy.
+1. **Expand.** Add the paired field and deploy; its column is nullable, as the rows already there have nothing in it.
    Every write from then on fills both columns.
    Run `manage.py seal` to seal the rows written before, then `manage.py seal --check`.
-2. **Read from the sealed field.** Lookups, display and writes move to it.
+2. **Read from the sealed field.** Lookups, display and writes move to it;
+   forms keep the plain field until the contract.
    A unique constraint on the sealed column can stand beside the plain one's:
    under one key a value has one token, so the two agree.
    Before deploying, `seal --check` must pass.
