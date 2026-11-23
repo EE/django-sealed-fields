@@ -1,3 +1,5 @@
+from io import StringIO
+
 import pytest
 from django.core.management import CommandError, call_command
 
@@ -22,3 +24,15 @@ def test_a_rotation_reseals_every_sealed_field(Record, settings):
     record = Record.objects.get(searchable='S')
     assert record.standalone == Sealed('T')
     assert Record.objects.filter(searchable__isnull=True, standalone__isnull=True).exists()
+
+
+def test_a_token_no_key_unseals_is_named_by_its_row(Record, settings):
+    """Its row doesn't load and can't be resealed, so a person has to look at it."""
+    record = Record.objects.create(standalone='T')
+    settings.SEALED_FIELDS_KEY = OTHER_KEY
+
+    out = StringIO()
+    with pytest.raises(CommandError, match='1 values not under SEALED_FIELDS_KEY'):
+        call_command('reseal', check=True, stdout=out)
+    row = f'{Record._meta.label}.standalone: the row with pk {record.pk!r} is not unsealing with any key'
+    assert row in out.getvalue()

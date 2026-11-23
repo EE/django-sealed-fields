@@ -1,8 +1,3 @@
-A command reporting on one row, as `gc_inspect` does in django-gc,
-would answer "why doesn't this row load?" without a shell holding the key:
-for each sealed field of the row, whether it is blank, which key unseals it, if any,
-and for a pair, its `pair_state` — never the value itself.
-
 Error reporters send the locals of every frame, and a frame inside this app may hold a revealed value
 (`unsealed`, the lookups, `seal`'s rows).
 Projects using it filter those frames out themselves, by module name, in their Sentry `before_send` or scrubber.
