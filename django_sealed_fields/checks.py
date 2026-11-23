@@ -22,20 +22,20 @@ def check_keys(app_configs=None, **kwargs):
             return []
         return [checks.Warning(
             f'SEALED_FIELDS_KEY is empty, so reading or writing these fails: {", ".join(users)}.',
-            id='sealed_fields.W001',
+            id='django_sealed_fields.W001',
         )]
     warnings = []
     if keys().key_is_short():
         warnings.append(checks.Warning(
             f'SEALED_FIELDS_KEY is shorter than {MIN_SECRET_LENGTH} characters, so nothing can be sealed.',
             hint='Move it to SEALED_FIELDS_KEY_FALLBACKS and generate a new SEALED_FIELDS_KEY.',
-            id='sealed_fields.W002',
+            id='django_sealed_fields.W002',
         ))
     warnings += [
         checks.Warning(
             f'Key {position} of SEALED_FIELDS_KEY_FALLBACKS is shorter than {MIN_SECRET_LENGTH} characters, '
             'so it can be unsealed with but never become SEALED_FIELDS_KEY.',
-            id='sealed_fields.W002',
+            id='django_sealed_fields.W002',
         )
         for position in keys().short_fallbacks()
     ]
@@ -60,7 +60,7 @@ def check_fields(app_configs=None, **kwargs):
                     'but every value it stores differs, so the index can find nothing.',
                     hint='Make it searchable=True, if every value it can hold is high-entropy.',
                     obj=field,
-                    id='sealed_fields.E002',
+                    id='django_sealed_fields.E002',
                 ))
     for purpose, fields in sorted(by_purpose.items()):
         if len(fields) > 1:
@@ -68,7 +68,7 @@ def check_fields(app_configs=None, **kwargs):
             errors.append(checks.Error(
                 f'{names} share the purpose {purpose!r}, so a token moved between them would still unseal.',
                 obj=fields[0],
-                id='sealed_fields.E001',
+                id='django_sealed_fields.E001',
             ))
     return errors
 

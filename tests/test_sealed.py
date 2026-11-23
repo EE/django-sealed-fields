@@ -4,7 +4,7 @@ import pickle
 import pytest
 from django.template import Context, Template
 
-from sealed_fields.sealed import Sealed
+from django_sealed_fields.sealed import Sealed
 
 
 def test_only_reveal_gives_the_value():
@@ -43,7 +43,7 @@ def test_sealed_values_compare_hash_and_copy_by_value():
 def test_a_template_shows_it_only_through_the_filter():
     context = Context({'code': Sealed('<ABC>'), 'blank': Sealed('')})
 
-    assert Template('{% load sealed_fields %}{{ code|reveal }}').render(context) == '&lt;ABC&gt;'
+    assert Template('{% load django_sealed_fields %}{{ code|reveal }}').render(context) == '&lt;ABC&gt;'
     assert Template('{% if blank %}shown{% endif %}').render(context) == ''
     with pytest.raises(TypeError):
         Template('{{ code }}').render(context)

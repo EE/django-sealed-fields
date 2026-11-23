@@ -1,7 +1,7 @@
 import pytest
 from django.core.management import CommandError, call_command
 
-from sealed_fields.sealed import Sealed
+from django_sealed_fields.sealed import Sealed
 
 
 OTHER_KEY = 'another-sealing-key-of-enough-length'

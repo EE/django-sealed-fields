@@ -3,8 +3,8 @@ from cryptography.exceptions import InvalidTag
 from django.core.exceptions import FieldError, ImproperlyConfigured, ValidationError
 from django.db.models import F
 
-from sealed_fields.fields import SealedTextField, _Keys, ciphers, decrypt, encrypt, sealing_cipher
-from sealed_fields.sealed import Sealed
+from django_sealed_fields.fields import SealedTextField, _Keys, ciphers, decrypt, encrypt, sealing_cipher
+from django_sealed_fields.sealed import Sealed
 
 
 OTHER_KEY = 'another-sealing-key-of-enough-length'

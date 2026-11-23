@@ -3,8 +3,8 @@ import pytest
 from django.db import connection, models
 from django.test.utils import isolate_apps
 
-from sealed_fields.pairing.fields import PairedFieldsMixin, PairedSealedTextField, PairMismatchError
-from sealed_fields.sealed import Sealed
+from django_sealed_fields.pairing.fields import PairedFieldsMixin, PairedSealedTextField, PairMismatchError
+from django_sealed_fields.sealed import Sealed
 
 
 def columns(Pair, pk):
@@ -36,7 +36,7 @@ def test_building_an_instance_with_either_field_gives_both_its_value(Pair):
         Pair(plain='P', paired='E')
 
 
-@isolate_apps('sealed_fields.pairing')
+@isolate_apps('django_sealed_fields.pairing')
 def test_without_either_field_both_take_the_plain_ones_default():
     """Which a blank NOT NULL plain column needs: '' rather than the sealed field's None."""
     class Blank(PairedFieldsMixin, models.Model):
@@ -44,7 +44,7 @@ def test_without_either_field_both_take_the_plain_ones_default():
         secret_sealed = PairedSealedTextField(purpose='test-blank', plain='secret', null=True)
 
         class Meta:
-            app_label = 'sealed_fields_pairing'
+            app_label = 'django_sealed_fields_pairing'
 
     assert (Blank().secret, Blank().secret_sealed) == ('', Sealed(''))
 
@@ -96,14 +96,14 @@ def test_a_deferred_field_loads_its_pair_with_it(Pair):
     assert (pair.paired, pair.plain) == (Sealed('E'), 'E')
 
 
-@isolate_apps('sealed_fields.pairing')
+@isolate_apps('django_sealed_fields.pairing')
 def test_the_fields_of_a_pair_may_come_in_either_order():
     class Backwards(PairedFieldsMixin, models.Model):
         secret_sealed = PairedSealedTextField(purpose='test-backwards', plain='secret', null=True)
         secret = models.TextField()
 
         class Meta:
-            app_label = 'sealed_fields_pairing'
+            app_label = 'django_sealed_fields_pairing'
 
     backwards = Backwards(secret='S')
     assert backwards.secret_sealed == Sealed('S')
@@ -111,24 +111,29 @@ def test_the_fields_of_a_pair_may_come_in_either_order():
     assert backwards.secret == 'E'
 
 
-@isolate_apps('sealed_fields.pairing')
+@isolate_apps('django_sealed_fields.pairing')
 def test_a_model_with_pairs_must_use_the_mixin():
     class Unpaired(models.Model):
         secret = models.CharField(max_length=10)
         secret_sealed = PairedSealedTextField(purpose='test-secret', plain='secret', null=True)
 
         class Meta:
-            app_label = 'sealed_fields_pairing'
+            app_label = 'django_sealed_fields_pairing'
 
     class Paired(PairedFieldsMixin, models.Model):
         secret = models.CharField(max_length=10)
         secret_sealed = PairedSealedTextField(purpose='test-other-secret', plain='secret', null=True)
 
         class Meta:
-            app_label = 'sealed_fields_pairing'
+            app_label = 'django_sealed_fields_pairing'
 
     def pairing_errors(model):
-        return [(error.id, error.obj) for error in model.check() if error.id.startswith('sealed_fields_pairing.')]
+        return [
+            (error.id, error.obj) for error in model.check()
+            if error.id.startswith('django_sealed_fields_pairing.')
+        ]
 
-    assert pairing_errors(Unpaired) == [('sealed_fields_pairing.E001', Unpaired._meta.get_field('secret_sealed'))]
+    assert pairing_errors(Unpaired) == [
+        ('django_sealed_fields_pairing.E001', Unpaired._meta.get_field('secret_sealed')),
+    ]
     assert pairing_errors(Paired) == []

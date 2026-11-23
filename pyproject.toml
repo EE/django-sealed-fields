@@ -21,7 +21,7 @@ classifiers = [
 Repository = "https://github.com/EE/django-sealed-fields"
 
 [tool.poetry]
-packages = [{ include = "sealed_fields" }]
+packages = [{ include = "django_sealed_fields" }]
 
 [tool.poetry.group.dev.dependencies]
 psycopg = { version = "*", extras = ["binary"] }

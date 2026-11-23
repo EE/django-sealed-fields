@@ -12,7 +12,7 @@ and keeps them sealed inside the application too:
 a value leaves only where code says `reveal()`.
 
 ```python
-from sealed_fields.fields import SealedTextField
+from django_sealed_fields.fields import SealedTextField
 
 
 class Invitation(models.Model):
@@ -58,7 +58,7 @@ It is not on PyPI yet; depend on a commit of this repository:
 django-sealed-fields @ git+https://github.com/EE/django-sealed-fields.git@<sha>
 ```
 
-Add `'sealed_fields'` to `INSTALLED_APPS`, and give it a key:
+Add `'django_sealed_fields'` to `INSTALLED_APPS`, and give it a key:
 
 ```python
 SEALED_FIELDS_KEY = env.str('SEALED_FIELDS_KEY', default='')
@@ -82,7 +82,7 @@ Keep a copy outside the place the application runs.
 `purpose` is a fixed string, unique across the project,
 bound into every token as associated data,
 so a token copied into another column does not unseal there.
-A system check (`sealed_fields.E001`) refuses two fields sharing one.
+A system check (`django_sealed_fields.E001`) refuses two fields sharing one.
 It is not the column name, so renaming a field changes nothing.
 
 `searchable=True` seals deterministically: the same value gives the same token in that field,
@@ -96,7 +96,7 @@ so a field answers `exact`, `in` and `isnull` for the values it stores the same 
 blank and null in any field, and any value in a searchable one.
 `filter(code=...)` and `UniqueConstraint` work as they are, and the database never needs the key.
 Anything else raises `FieldError`,
-and an index or a unique constraint on a field that isn't searchable fails a system check (`sealed_fields.E002`).
+and an index or a unique constraint on a field that isn't searchable fails a system check (`django_sealed_fields.E002`).
 In the admin, name the lookup: `search_fields = ['code__exact']`,
 since a bare name searches with `icontains` and `=code` with `iexact`.
 
@@ -122,7 +122,7 @@ send_mail(subject, f'Your code is {invitation.code.reveal()}', ...)
 ```
 
 ```django
-{% load sealed_fields %}
+{% load django_sealed_fields %}
 {{ invitation.code|reveal }}
 ```
 
@@ -156,20 +156,20 @@ Find duplicates with a lookup before inserting, and leave the constraint as the 
 
 A key shorter than 32 characters never seals but is still read with,
 so what it protects can be resealed under a better one.
-A missing or short key is a warning (`sealed_fields.W001`, `W002`), not an error:
+A missing or short key is a warning (`django_sealed_fields.W001`, `W002`), not an error:
 which part of a project is of use without it, the app can't know.
 
 ## Moving a plain column in
 
 Encrypting a column that already holds data is a rollout, not a migration.
-The `sealed_fields.pairing` app, installed for its duration and removed after, carries it:
+The `django_sealed_fields.pairing` app, installed for its duration and removed after, carries it:
 
 ```python
-INSTALLED_APPS = [..., 'sealed_fields', 'sealed_fields.pairing']
+INSTALLED_APPS = [..., 'django_sealed_fields', 'django_sealed_fields.pairing']
 ```
 
 ```python
-from sealed_fields.pairing.fields import PairedFieldsMixin, PairedSealedTextField
+from django_sealed_fields.pairing.fields import PairedFieldsMixin, PairedSealedTextField
 
 
 class Invitation(PairedFieldsMixin, models.Model):
@@ -196,7 +196,7 @@ so `seal --check` lists it and `seal` leaves it for whoever knows which column i
 3. **Soak** for as long as it takes to trust it, and rehearse a key rotation and a restore from backup meanwhile.
 4. **Contract.** In one migration, turn the pair into a `SealedTextField` and then drop the plain column —
    in that order, since earlier migrations name the paired field, which needs its plain one —
-   and remove `sealed_fields.pairing` from `INSTALLED_APPS`.
+   and remove `django_sealed_fields.pairing` from `INSTALLED_APPS`.
    From here on the key is the only way to read the values.
 
 Dropping a column only hides it: its values stay on disk until the rows are rewritten
@@ -228,7 +228,7 @@ A value is safe in a frame for as long as it is `Sealed`.
 Once revealed, it is text like any other:
 in this app's own frames on its way in and out of the database (`unsealed`, the lookups),
 and in your code's locals, request bodies and partner responses under whatever name it has there.
-Drop the locals of `sealed_fields` frames in the reporter, and scrub your own; this app cannot see them.
+Drop the locals of `django_sealed_fields` frames in the reporter, and scrub your own; this app cannot see them.
 
 ## Deliberately not here
 
@@ -312,7 +312,7 @@ The URL-safe base64 of AES-SIV (RFC 5297) output,
 under a 64-byte key derived from the configured one with HKDF-SHA256.
 A searchable token is `siv(value, [purpose])`;
 any other is `nonce ‖ siv(value, [purpose, nonce])` with a random 16-byte nonce.
-`sealed_fields/fields.py` has the details, and a test holds the format still.
+`django_sealed_fields/fields.py` has the details, and a test holds the format still.
 
 ## Development
 
