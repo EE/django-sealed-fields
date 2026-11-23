@@ -44,7 +44,8 @@ TypeError: A Sealed gives its value only to reveal().
 - **Every claim about the stored data can be checked.**
   `reseal --check` says whether every value is under the current key,
   `seal --check` whether every plain column has been moved into its sealed one.
-  Each step of a rotation or a move ends with one of them.
+  Each step of a rotation or a move ends with one of them,
+  and each names, by pk, the rows that don't load and need a person.
 - **What it cannot answer, it refuses.**
   A lookup the stored values cannot answer raises `FieldError` from `filter()` rather than matching nothing,
   an index that could find nothing fails the system checks,
@@ -198,6 +199,10 @@ so `seal --check` lists it and `seal` leaves it for whoever knows which column i
    in that order, since earlier migrations name the paired field, which needs its plain one —
    and remove `django_sealed_fields.pairing` from `INSTALLED_APPS`.
    From here on the key is the only way to read the values.
+
+Rolling back the expand step leaves the release before it writing only the plain column,
+so a value it changes in a sealed row leaves the pair disagreeing.
+Before deploying again, set the sealed column to `NULL`, and `seal` takes those rows from the plain one.
 
 Dropping a column only hides it: its values stay on disk until the rows are rewritten
 (in PostgreSQL, `VACUUM FULL` or `pg_repack`).
