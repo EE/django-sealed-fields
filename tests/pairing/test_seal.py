@@ -1,3 +1,5 @@
+from io import StringIO
+
 import pytest
 from django.core.management import CommandError, call_command
 
@@ -27,8 +29,10 @@ def test_a_pair_drifted_apart_is_reported_and_left_for_a_person(Pair):
     pair = Pair.objects.create(plain='P')
     Pair.objects.update(plain='Q')
 
-    with pytest.raises(CommandError, match='1 values not sealed yet, not unsealing, or disagreeing'):
-        call_command('seal', check=True)
+    out = StringIO()
+    with pytest.raises(CommandError, match='1 values not agreeing'):
+        call_command('seal', check=True, stdout=out)
+    assert f'{Pair._meta.label}.paired: the row with pk {pair.pk!r} is disagreeing' in out.getvalue()
     call_command('seal')
     with pytest.raises(CommandError):
         call_command('seal', check=True)

@@ -1,6 +1,8 @@
 """A sealed field paired with a plain one: one value, two columns."""
 import pytest
+from django.core.exceptions import ValidationError
 from django.db import connection, models
+from django.forms import modelform_factory
 from django.test.utils import isolate_apps
 
 from django_sealed_fields.pairing.fields import PairedFieldsMixin, PairedSealedTextField, PairMismatchError
@@ -41,7 +43,7 @@ def test_without_either_field_both_take_the_plain_ones_default():
     """Which a blank NOT NULL plain column needs: '' rather than the sealed field's None."""
     class Blank(PairedFieldsMixin, models.Model):
         secret = models.CharField(max_length=10, blank=True)
-        secret_sealed = PairedSealedTextField(purpose='test-blank', plain='secret', null=True)
+        secret_sealed = PairedSealedTextField(purpose='test-blank', plain='secret')
 
         class Meta:
             app_label = 'django_sealed_fields_pairing'
@@ -97,9 +99,33 @@ def test_a_deferred_field_loads_its_pair_with_it(Pair):
 
 
 @isolate_apps('django_sealed_fields.pairing')
+def test_a_pair_is_edited_and_validated_as_its_plain_field():
+    """A form showing both would keep whichever it set last, and drop an edit to the other."""
+    class Edited(PairedFieldsMixin, models.Model):
+        secret = models.CharField(max_length=4, blank=True)
+        secret_sealed = PairedSealedTextField(purpose='test-edited', plain='secret')
+
+        class Meta:
+            app_label = 'django_sealed_fields_pairing'
+
+    assert list(modelform_factory(Edited, fields='__all__').base_fields) == ['secret']
+    Edited(secret='').full_clean()
+    with pytest.raises(ValidationError) as error:
+        Edited(secret='12345').full_clean()
+    assert list(error.value.message_dict) == ['secret']
+
+
+def test_a_paired_field_takes_the_options_a_pair_needs_and_no_others():
+    """Migrations written before the options were fixed still name them."""
+    assert PairedSealedTextField(purpose='test-options', plain='secret', null=True).null
+    with pytest.raises(TypeError, match='always null=True'):
+        PairedSealedTextField(purpose='test-options', plain='secret', null=False)
+
+
+@isolate_apps('django_sealed_fields.pairing')
 def test_the_fields_of_a_pair_may_come_in_either_order():
     class Backwards(PairedFieldsMixin, models.Model):
-        secret_sealed = PairedSealedTextField(purpose='test-backwards', plain='secret', null=True)
+        secret_sealed = PairedSealedTextField(purpose='test-backwards', plain='secret')
         secret = models.TextField()
 
         class Meta:
@@ -115,14 +141,14 @@ def test_the_fields_of_a_pair_may_come_in_either_order():
 def test_a_model_with_pairs_must_use_the_mixin():
     class Unpaired(models.Model):
         secret = models.CharField(max_length=10)
-        secret_sealed = PairedSealedTextField(purpose='test-secret', plain='secret', null=True)
+        secret_sealed = PairedSealedTextField(purpose='test-secret', plain='secret')
 
         class Meta:
             app_label = 'django_sealed_fields_pairing'
 
     class Paired(PairedFieldsMixin, models.Model):
         secret = models.CharField(max_length=10)
-        secret_sealed = PairedSealedTextField(purpose='test-other-secret', plain='secret', null=True)
+        secret_sealed = PairedSealedTextField(purpose='test-other-secret', plain='secret')
 
         class Meta:
             app_label = 'django_sealed_fields_pairing'

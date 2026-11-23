@@ -44,7 +44,8 @@ TypeError: A Sealed gives its value only to reveal().
 - **Every claim about the stored data can be checked.**
   `reseal --check` says whether every value is under the current key,
   `seal --check` whether every plain column has been moved into its sealed one.
-  Each step of a rotation or a move ends with one of them.
+  Each step of a rotation or a move ends with one of them,
+  and each names, by pk, the rows that don't load and need a person.
 - **What it cannot answer, it refuses.**
   A lookup the stored values cannot answer raises `FieldError` from `filter()` rather than matching nothing,
   an index that could find nothing fails the system checks,
@@ -174,11 +175,13 @@ from django_sealed_fields.pairing.fields import PairedFieldsMixin, PairedSealedT
 
 class Invitation(PairedFieldsMixin, models.Model):
     code = models.CharField(max_length=20, unique=True)
-    code_sealed = PairedSealedTextField(purpose='invitation-code', searchable=True, plain='code', null=True)
+    code_sealed = PairedSealedTextField(purpose='invitation-code', searchable=True, plain='code')
 ```
 
 A pair holds one value:
 setting either attribute sets both, and every save writes both columns.
+Forms and validation see only the plain field,
+since a form showing both would keep whichever it set last.
 A row whose sealed column is still null loads its value from the plain one,
 since it was written before the sealed field existed;
 any other row whose columns disagree does not load (`PairMismatchError`).
@@ -186,10 +189,11 @@ Something wrote such a row around the pair —
 `QuerySet.update()`, `bulk_update()` naming one field of a pair, or raw SQL —
 so `seal --check` lists it and `seal` leaves it for whoever knows which column is right.
 
-1. **Expand.** Add the paired field, nullable, and deploy.
+1. **Expand.** Add the paired field and deploy; its column is nullable, as the rows already there have nothing in it.
    Every write from then on fills both columns.
    Run `manage.py seal` to seal the rows written before, then `manage.py seal --check`.
-2. **Read from the sealed field.** Lookups, display and writes move to it.
+2. **Read from the sealed field.** Lookups, display and writes move to it;
+   forms keep the plain field until the contract.
    A unique constraint on the sealed column can stand beside the plain one's:
    under one key a value has one token, so the two agree.
    Before deploying, `seal --check` must pass.
@@ -198,6 +202,10 @@ so `seal --check` lists it and `seal` leaves it for whoever knows which column i
    in that order, since earlier migrations name the paired field, which needs its plain one —
    and remove `django_sealed_fields.pairing` from `INSTALLED_APPS`.
    From here on the key is the only way to read the values.
+
+Rolling back the expand step leaves the release before it writing only the plain column,
+so a value it changes in a sealed row leaves the pair disagreeing.
+Before deploying again, set the sealed column to `NULL`, and `seal` takes those rows from the plain one.
 
 Dropping a column only hides it: its values stay on disk until the rows are rewritten
 (in PostgreSQL, `VACUUM FULL` or `pg_repack`).

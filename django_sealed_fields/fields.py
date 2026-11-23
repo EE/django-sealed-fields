@@ -197,11 +197,13 @@ class SealedTextField(models.TextField):
 
     def unsealed(self, stored):
         """The value a column holds: blank or null as it is, a token from whichever key made it."""
-        if not stored:
-            return stored
-        for cipher in ciphers():
+        return self.opened(stored)[0] if stored else stored
+
+    def opened(self, token):
+        """``(value, key)``: what ``token`` holds, and the position in ``ciphers()`` of the key that made it."""
+        for key, cipher in enumerate(ciphers()):
             try:
-                return decrypt(cipher, stored, self.purpose, self.searchable)
+                return decrypt(cipher, token, self.purpose, self.searchable), key
             except (InvalidTag, ValueError):
                 continue
         raise DecryptionError(f'{self} holds a value no key tried decrypts.')

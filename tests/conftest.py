@@ -2,8 +2,8 @@ import pytest
 from django.db import connection, models
 from django.test.utils import isolate_apps
 
+from django_sealed_fields import rows
 from django_sealed_fields.fields import SealedTextField
-from django_sealed_fields.management.commands import reseal
 
 
 @pytest.fixture
@@ -25,7 +25,7 @@ def Record(transactional_db, monkeypatch):
 
         with connection.schema_editor() as editor:
             editor.create_model(Record)
-        monkeypatch.setattr(reseal, 'apps', registry)
+        monkeypatch.setattr(rows, 'apps', registry)
         yield Record
         with connection.schema_editor() as editor:
             editor.delete_model(Record)
