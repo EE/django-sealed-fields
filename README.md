@@ -228,7 +228,9 @@ A value is safe in a frame for as long as it is `Sealed`.
 Once revealed, it is text like any other:
 in this app's own frames on its way in and out of the database (`unsealed`, the lookups),
 and in your code's locals, request bodies and partner responses under whatever name it has there.
-Drop the locals of `django_sealed_fields` frames in the reporter, and scrub your own; this app cannot see them.
+For Sentry, `django_sealed_fields.sentry.drop_frame_locals` drops the locals of this app's frames from an event:
+pass it as `before_send`, or call it from yours.
+Your own frames are yours to scrub; this app cannot see them.
 
 ## Deliberately not here
 
