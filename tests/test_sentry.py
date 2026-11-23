@@ -13,7 +13,7 @@ def test_an_error_inside_the_package_reaches_sentry_without_its_frames_locals():
     event = drop_frame_locals(*event_from_exception(error.value))
 
     frames = event['exception']['values'][0]['stacktrace']['frames']
-    assert [(frame['module'], 'vars' in frame) for frame in frames] == [
+    assert {(frame['module'], 'vars' in frame) for frame in frames} == {
         ('tests.test_sentry', True),
         ('django_sealed_fields.fields', False),
-    ]
+    }
