@@ -1,0 +1,52 @@
+[project]
+name = "django-sealed-fields"
+version = "0.1.0"
+description = "Encrypted Django model fields whose values leave the application only where code says reveal(), with key rotation and moving plain columns in, each with a check."
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.10"
+dependencies = [
+    "django (>=4.2,<7.0)",
+    "cryptography (>=37.0)",
+]
+keywords = ["django", "encryption", "fields", "aes-siv", "key-rotation"]
+classifiers = [
+    "Framework :: Django",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3",
+    "Topic :: Security :: Cryptography",
+]
+
+[project.urls]
+Repository = "https://github.com/EE/django-sealed-fields"
+
+[tool.poetry]
+packages = [{ include = "sealed_fields" }]
+
+[tool.poetry.group.dev.dependencies]
+psycopg = { version = "*", extras = ["binary"] }
+pytest = "*"
+pytest-django = "*"
+sentry-sdk = "*"
+flake8 = "*"
+flake8-isort = "*"
+flake8-pyproject = "*"
+
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "testproject.settings"
+pythonpath = ["."]
+
+[tool.flake8]
+max-line-length = 120
+
+[tool.isort]
+skip_gitignore = true
+lines_after_imports = 2
+# 5 = Hanging Grid Grouped
+multi_line_output = 5
+include_trailing_comma = true
+line_length = 120
+
+[build-system]
+requires = ["poetry-core>=2.0"]
+build-backend = "poetry.core.masonry.api"

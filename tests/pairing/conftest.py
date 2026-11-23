@@ -1,0 +1,33 @@
+import pytest
+from django.db import connection, models
+from django.test.utils import isolate_apps
+
+from sealed_fields.management.commands import reseal
+from sealed_fields.pairing.fields import PairedFieldsMixin, PairedSealedTextField
+from sealed_fields.pairing.management.commands import seal
+
+
+@pytest.fixture
+def Pair(transactional_db, monkeypatch):
+    """A model with a table for the test, and the only model the commands see.
+
+    Its table is made outside a transaction, which SQLite asks of a schema change.
+    Nothing registers it with them: declaring the fields is enough.
+    """
+    with isolate_apps('sealed_fields.pairing') as registry:
+        class Pair(PairedFieldsMixin, models.Model):
+            plain = models.TextField(null=True)
+            paired = PairedSealedTextField(purpose='test-paired', searchable=True, plain='plain', null=True)
+            other = models.TextField(null=True)
+            other_paired = PairedSealedTextField(purpose='test-other-paired', plain='other', null=True)
+
+            class Meta:
+                app_label = 'sealed_fields_pairing'
+
+        with connection.schema_editor() as editor:
+            editor.create_model(Pair)
+        monkeypatch.setattr(seal, 'apps', registry)
+        monkeypatch.setattr(reseal, 'apps', registry)
+        yield Pair
+        with connection.schema_editor() as editor:
+            editor.delete_model(Pair)
