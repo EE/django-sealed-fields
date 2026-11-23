@@ -8,6 +8,8 @@ as text in the plain field's attribute and as a ``Sealed`` in the sealed one's.
 Setting either attribute sets both, building an instance gives both the same value,
 every save writes both columns, and loading a row applies ``pair_state``.
 ``QuerySet.update()``, ``bulk_update()`` naming one field of a pair, and raw SQL go around all of it.
+Forms and validation see only the plain field,
+since a form showing both would keep whichever of them it set last and drop an edit to the other.
 The model must use ``PairedFieldsMixin``, which a system check enforces (``django_sealed_fields_pairing.E001``).
 
 The pair is kept in step both ways so that code writing the plain field needs no change while the pair exists.
@@ -48,12 +50,20 @@ def pair_state(plain, sealed):
 
 
 class PairedSealedTextField(SealedTextField):
+    # Null until the row is sealed; edited, and so validated, as its plain field.
+    FIXED = {'null': True, 'editable': False}
+
     def __init__(self, *args, plain, **kwargs):
         self.plain = plain
+        for option, value in self.FIXED.items():
+            if kwargs.setdefault(option, value) != value:
+                raise TypeError(f'A paired field is always {option}={value}.')
         super().__init__(*args, **kwargs)
 
     def deconstruct(self):
         name, path, args, kwargs = super().deconstruct()
+        for option in self.FIXED:
+            kwargs.pop(option, None)
         kwargs['plain'] = self.plain
         return name, path, args, kwargs
 
