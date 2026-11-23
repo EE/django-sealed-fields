@@ -2,8 +2,8 @@ import pytest
 from django.db import connection, models
 from django.test.utils import isolate_apps
 
-from sealed_fields.fields import SealedTextField
-from sealed_fields.management.commands import reseal
+from django_sealed_fields.fields import SealedTextField
+from django_sealed_fields.management.commands import reseal
 
 
 @pytest.fixture
@@ -13,7 +13,7 @@ def Record(transactional_db, monkeypatch):
     Its table is made outside a transaction, which SQLite asks of a schema change.
     Nothing registers it with the command: declaring the fields is enough.
     """
-    with isolate_apps('sealed_fields') as registry:
+    with isolate_apps('django_sealed_fields') as registry:
         class Record(models.Model):
             searchable = SealedTextField(
                 purpose='test-searchable', searchable=True, unique=True, null=True, blank=True,
@@ -21,7 +21,7 @@ def Record(transactional_db, monkeypatch):
             standalone = SealedTextField(purpose='test-standalone', null=True, blank=True)
 
             class Meta:
-                app_label = 'sealed_fields'
+                app_label = 'django_sealed_fields'
 
         with connection.schema_editor() as editor:
             editor.create_model(Record)

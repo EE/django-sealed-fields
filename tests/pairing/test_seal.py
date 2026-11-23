@@ -1,10 +1,10 @@
 import pytest
 from django.core.management import CommandError, call_command
 
-from sealed_fields.fields import ciphers, encrypt
-from sealed_fields.pairing.fields import AGREE, DISAGREE, NOT_SEALED_YET, PairedSealedTextField
-from sealed_fields.pairing.management.commands.seal import UNREADABLE, classify
-from sealed_fields.sealed import Sealed
+from django_sealed_fields.fields import ciphers, encrypt
+from django_sealed_fields.pairing.fields import AGREE, DISAGREE, NOT_SEALED_YET, PairedSealedTextField
+from django_sealed_fields.pairing.management.commands.seal import UNREADABLE, classify
+from django_sealed_fields.sealed import Sealed
 
 
 OTHER_KEY = 'another-sealing-key-of-enough-length'

@@ -3,7 +3,7 @@ from django.core import checks
 
 
 class SealedFieldsConfig(AppConfig):
-    name = 'sealed_fields'
+    name = 'django_sealed_fields'
     verbose_name = 'Sealed fields'
 
     def ready(self):

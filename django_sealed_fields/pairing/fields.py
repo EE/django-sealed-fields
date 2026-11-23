@@ -8,7 +8,7 @@ as text in the plain field's attribute and as a ``Sealed`` in the sealed one's.
 Setting either attribute sets both, building an instance gives both the same value,
 every save writes both columns, and loading a row applies ``pair_state``.
 ``QuerySet.update()``, ``bulk_update()`` naming one field of a pair, and raw SQL go around all of it.
-The model must use ``PairedFieldsMixin``, which a system check enforces (``sealed_fields_pairing.E001``).
+The model must use ``PairedFieldsMixin``, which a system check enforces (``django_sealed_fields_pairing.E001``).
 
 The pair is kept in step both ways so that code writing the plain field needs no change while the pair exists.
 Keeping it one way, copying the sealed value to the plain field on save,
@@ -64,7 +64,7 @@ class PairedSealedTextField(SealedTextField):
                 f'{self.model._meta.label} does not use PairedFieldsMixin.',
                 hint='Without it, building, loading and save(update_fields=...) can split the pair.',
                 obj=self,
-                id='sealed_fields_pairing.E001',
+                id='django_sealed_fields_pairing.E001',
             ))
         return errors
 
